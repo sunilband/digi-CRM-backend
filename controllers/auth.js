@@ -8,7 +8,6 @@ const Otp = require("../DataBase/optSchema")
 // taking data from req.body and store the data in mongodb Database 
 const Register = async(req,res)=>{
     const {name,email,password} = req.body
-
     if(!email || !password){
         return res.status(400).json({message:"email or password are missing"})
     }
@@ -16,12 +15,18 @@ const Register = async(req,res)=>{
     try{
         const userExist = await User.findOne({email:email})
         if(userExist){
-            res.status(422).json({error:"user is alredy exists"})
+            res.status(422).json({
+                success:false
+                ,error:"User already exist"
+            })
         }
         else{
             const user = new User({name,email,password})
             await user.save()
-            res.status(200).json({message:"sucsessfull"})
+            res.status(200).json({
+                success:true,
+                message:"User created"
+            })
         }   
     }catch(err){
         console.log(err)
@@ -36,14 +41,19 @@ const Login = async(req,res)=>{
         const {email,password} = req.body
 
         if(!email || !password){
-            res.status(400).json({error:"email and password both are require"})
+            res.status(400).json({
+                success:false,
+                error:"email and password both are require"})
         }
 
         const userLogin = await User.findOne({email:email}).select("+password");
         userId=userLogin._id
 
         if(!userLogin){
-            res.status(404).json({error:"email not found"})   
+            res.status(404).json({
+                success:false,
+                error:"email not found"
+            })   
         }
         else{
             const isMatch = await bcrypt.compare(password,userLogin.password);
@@ -71,11 +81,17 @@ const Login = async(req,res)=>{
             })
 
             if(!isMatch){
-                console.log("we are in not ismatch")
-                res.status(400).json({message:"invalid password"})
+                res.status(400).json({
+                    success:false,
+                    error:"Invalid Credentials"
+                })
             }
             else{
-                res.status(200).json(userLogin)
+                res.status(200).json({
+                    success:true,
+                    message:"login Success",
+                    token
+                })
             }
         }
 
@@ -88,8 +104,13 @@ const Login = async(req,res)=>{
 
 // getting data from id
 const GetDataById = async (req, res) => {
-    // const userId = req.params.id;
-    const token=req.body.token
+
+    const token = req.headers.authorization.split(' ')[1];
+    if(!token) return res.send(
+        {
+        success:false,
+        error:"No credentials"
+        });
     try {
         const decoded=jwt.verify(token,process.env.private_key)
         // const user = await User.find({_id:{ $in: userId } });
