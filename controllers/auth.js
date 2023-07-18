@@ -75,7 +75,7 @@ const Login = async(req,res)=>{
               User.token = token;
         
             // store jwt token in cookie 
-            res.cookie("jwttoken",token,{
+            res.cookie("accessToken",token,{
                 expires:new Date(Date.now()+25892000000),
                 httpOnly:true
             })
@@ -109,7 +109,7 @@ const GetDataById = async (req, res) => {
     if(!token) return res.send(
         {
         success:false,
-        error:"No credentials"
+        error:"No token found"
         });
     try {
         const decoded=jwt.verify(token,process.env.private_key)
@@ -127,9 +127,14 @@ const GetDataById = async (req, res) => {
   
 // updating data by id
 const UpdateDataById = async (req, res) => {
-    // const userId = req.params.id;
     const updatedUser = req.body;
-    const token=req.body.token
+    // const token=req.body.token
+    const token = req.headers.authorization.split(' ')[1];
+    if(!token) return res.send(
+        {
+        success:false,
+        error:"No token found"
+        });
     const {_id}=jwt.verify(token,process.env.private_key)
     try {
       const user = await User.findByIdAndUpdate(_id, updatedUser, { new: true });
@@ -228,7 +233,7 @@ const HomePage = (req,res)=>{
 // logout
 const Logout = (req,res)=>{
     console.log("we are in logout")
-    res.clearCookie("jwttoken",{path:"/"})
+    res.clearCookie("accesssToken",{path:"/"})
     res.status(200).send("user logout")
 }
 

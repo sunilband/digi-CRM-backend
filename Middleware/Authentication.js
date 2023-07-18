@@ -7,7 +7,7 @@ const config = process.env;
 
 const verifyToken = (req, res, next) => {
     
-  const token = req.cookies.jwttoken
+  const token = req.cookies.accessToken
   console.log(token);
 
   if (!token) {
