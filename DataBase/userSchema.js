@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ["intern", "manager", "jr.dev", "CEO"],
+    message: 'Role must be one of intern, manager, or jr.dev'
   },
 
   employeeID: {
@@ -43,6 +44,7 @@ const userSchema = new mongoose.Schema({
   department: {
     type: String,
     enum: ["sales", "frontend", "backend", "hr"],
+    message: 'Role must be one of sales, frontend,backend or hr'
   },
 
   manager: {
@@ -57,7 +59,7 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: Number,
   },
-  
+
 });
 
 userSchema.pre("save", async function (next) {
