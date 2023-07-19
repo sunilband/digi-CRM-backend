@@ -5,40 +5,41 @@ const shortid = require('shortid');
 shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
 dotenv.config({ path: "../config.env" });
 
-// schema for tasks in user
+
 const taskSchema = new mongoose.Schema({
-  taskId: {
-      type: String,
-      required: true,
-    },
-  taskName: {
-      type: String,
-      required: true,
-    },
-  taskDescription: {
-      type: String,
-      required: true,
-    },
-  status: {
-      type: String,
-      required: true,
-    },
-  assignedBy: {
-      type: String,
-      required: true,
-    },
-  assignedTime:  {
-      type: Date,
-      default: Date.now
-    }
+    taskId: {
+        type: String,
+        required: true,
+      },
+    taskName: {
+        type: String,
+        required: true,
+      },
+    taskDescription: {
+        type: String,
+        required: true,
+      },
+    status: {
+        type: String,
+        required: true,
+      },
+    assignedBy: {
+        type: String,
+        required: true,
+      },
+    assignedTime:  {
+        type: Date,
+        default: Date.now
+      }
 });
 
+const superUserSchema = new mongoose.Schema({
 
-const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
   },
+
   email: {
     type: String,
     required: true,
@@ -56,20 +57,28 @@ const userSchema = new mongoose.Schema({
     minLength: [6, "Password too short"],
   },
 
-  // non required fields below
   tasks: [{
     type: [taskSchema],
     default: []
   }],
 
-  role: {
-    type: String,
-    enum: ["intern", "manager", "jr.dev", "CEO"],
-    message: 'Role must be one of intern, manager, or jr.dev'
+  admin:{
+    type:Boolean,
+    default:true,
+    enum:[true]
   },
+
   authLevel:{
     type:Number,
-    default:0
+    required: true,
+    enum: [1,2,3,4],
+  },
+
+  role: {
+    type: String,
+    required: true,
+    enum: ["intern", "manager", "jr.dev", "CEO"],
+    message: 'Role must be one of intern, manager, or jr.dev'
   },
 
   employeeID: {
@@ -80,26 +89,20 @@ const userSchema = new mongoose.Schema({
 
   department: {
     type: String,
+    required: true,
     enum: ["sales", "frontend", "backend", "hr"],
     message: 'Role must be one of sales, frontend,backend or hr'
   },
 
-  manager: {
-    name: {
-      type: String,
-    },
-    id: {
-      type: String,
-    },
-  },
-
   phone: {
     type: Number,
+    required: true,
   },
+
 
 });
 
-userSchema.pre("save", async function (next) {
+superUserSchema.pre("save", async function (next) {
   console.log("we are in middleware");
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 12);
@@ -108,4 +111,4 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model("SuperUser", superUserSchema);

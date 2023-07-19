@@ -3,6 +3,7 @@ const router = express.Router()
 const Authenticate = require("../Middleware/Authentication")
 const {
     Register,
+    RegisterSuperUser,
     Login,
     SendMail,
     ChangePass,
@@ -20,6 +21,7 @@ router.get("/users/",GetDataById)
 
 // POST
 router.post("/register",Register)
+router.post("/registerAdmin",RegisterSuperUser)
 router.post("/login",Login)
 router.post("/sendmail",SendMail)
 router.post('/changepass',ChangePass)
