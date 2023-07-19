@@ -67,6 +67,7 @@ const userSchema = new mongoose.Schema({
     enum: ["intern", "manager", "jr.dev", "CEO"],
     message: 'Role must be one of intern, manager, or jr.dev'
   },
+  
   authLevel:{
     type:Number,
     default:0

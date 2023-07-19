@@ -96,7 +96,8 @@ const RegisterSuperUser = async (req, res) => {
 
 //Adding login Authentication through here and creating the jwt tokens for auth
 const Login = async (req, res) => {
-  let userId = "";
+
+let userId = "";
   try {
     const { email, password } = req.body;
 
@@ -107,7 +108,11 @@ const Login = async (req, res) => {
       });
     }
 
-    const userLogin = await User.findOne({ email: email }).select("+password");
+    let userLogin = await User.findOne({ email: email }).select("+password");
+    if(userLogin===null)
+    {
+    userLogin = await SuperUser.findOne({ email: email }).select("+password");
+    }
     userId = userLogin._id;
 
     if (!userLogin) {
@@ -117,16 +122,6 @@ const Login = async (req, res) => {
       });
     } else {
       const isMatch = await bcrypt.compare(password, userLogin.password);
-      // adding jwt token
-      // const token = jwt.sign(
-      //     { user_id: User._id, email },
-      //     process.env.private_key,
-      //     {
-      //       expiresIn: "2h",
-      //     }
-      //   );
-
-      // now saving token by only _id
       const token = jwt.sign({ _id: userId }, process.env.private_key);
       // save user token
       User.token = token;
@@ -151,7 +146,6 @@ const Login = async (req, res) => {
       }
     }
   } catch (err) {
-    console.log("error in signin auth");
     console.log(err);
     res.send(err);
   }
@@ -159,6 +153,7 @@ const Login = async (req, res) => {
 
 // getting data from id
 const GetDataById = async (req, res) => {
+
   const token = req.headers.authorization.split(" ")[1];
   if (!token)
     return res.send({
@@ -167,19 +162,24 @@ const GetDataById = async (req, res) => {
     });
   try {
     const decoded = jwt.verify(token, process.env.private_key);
-    // const user = await User.find({_id:{ $in: userId } });
-    const user = await User.find({ _id: { $in: decoded._id } });
+
+    let user = await User.find({ _id: { $in: decoded._id } });
+    if(user.length==0)
+    {
+    user = await SuperUser.find({ _id: { $in: decoded._id } });
+
+    }
     if (!user) {
       throw new Error("User not found");
     }
-    res.send(user);
+    res.json(user[0]);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error");
   }
 };
 
-// updating data by id
+// updating data by Admin by using id
 const UpdateDataById = async (req, res) => {
   const updatedUser = req.body;
   // const token=req.body.token
@@ -239,7 +239,6 @@ const SendMail = async (req, res) => {
           }
         });
       } catch (err) {
-        console.log("error in sending emale to email");
         res.send(err);
       }
 
@@ -280,7 +279,6 @@ const HomePage = (req, res) => {
 
 // logout
 const Logout = (req, res) => {
-  console.log("we are in logout");
   res.clearCookie("accesssToken", { path: "/" });
   res.status(200).send("user logout");
 };
