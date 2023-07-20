@@ -77,7 +77,7 @@ const superUserSchema = new mongoose.Schema({
   role: {
     type: String,
     required: true,
-    enum: ["intern", "manager", "jr.dev", "CEO"],
+    enum: ["Manager", "Team Lead", "CEO"],
     message: 'Role must be one of intern, manager, or jr.dev'
   },
 
@@ -90,7 +90,7 @@ const superUserSchema = new mongoose.Schema({
   department: {
     type: String,
     required: true,
-    enum: ["sales", "frontend", "backend", "hr"],
+    enum: ["Sales", "Frontend", "Backend", "Hr", "Other"],
     message: 'Role must be one of sales, frontend,backend or hr'
   },
 
@@ -98,7 +98,6 @@ const superUserSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-
 
 });
 

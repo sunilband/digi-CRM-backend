@@ -56,11 +56,21 @@ const RegisterSuperUser = async (req, res) => {
   
   
 // creating superuser if admin key is good
-  
+
+    
 
   try {
     const { name, email, password, authLevel, role, department, phone } =
     req.body;
+
+    const userExist = await User.findOne({ email: email });
+    
+    if(userExist){
+        return res
+      .status(422)
+      .json({ success: false, error: "User already exists as non admin" });
+    }
+    
   if (!email || !password) {
     return res
       .status(400)
