@@ -8,6 +8,8 @@ const {
     SendMail,
     ChangePass,
     HomePage,
+    GetAllusers,
+    GetManagers,
     GetDataById,
     UpdateDataById,
     Logout
@@ -18,6 +20,10 @@ const {
 router.get("/home",Authenticate,HomePage)
 router.get("/logout",Logout)
 router.get("/users/",GetDataById)
+router.get("/users/getallusers",GetAllusers)
+router.get("/users/getmanagers",GetManagers)
+
+
 
 // POST
 router.post("/register",Register)
@@ -27,7 +33,7 @@ router.post("/sendmail",SendMail)
 router.post('/changepass',ChangePass)
 
 // UPDATE
-router.put('/users/',UpdateDataById );
+router.put('/users/updateuser',UpdateDataById );
 
 // EXPORTS
 module.exports = router

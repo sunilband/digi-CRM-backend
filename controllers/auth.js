@@ -44,38 +44,35 @@ const RegisterSuperUser = async (req, res) => {
   try {
     const { adminKey } = req.body;
     if (adminKey !== process.env.SUPER_USER_KEY) {
-        return res
-          .status(400)
-          .json({ success: false, error: "Not authorized for admin signup" });
-      }
+      return res
+        .status(400)
+        .json({ success: false, error: "Not authorized for admin signup" });
+    }
   } catch (error) {
     return res
-    .status(400)
-    .json({ success: false, error: "Not authorized for admin signup" });
+      .status(400)
+      .json({ success: false, error: "Not authorized for admin signup" });
   }
-  
-  
-// creating superuser if admin key is good
 
-    
+  // creating superuser if admin key is good
 
   try {
     const { name, email, password, authLevel, role, department, phone } =
-    req.body;
+      req.body;
 
     const userExist = await User.findOne({ email: email });
-    
-    if(userExist){
-        return res
-      .status(422)
-      .json({ success: false, error: "User already exists as non admin" });
+
+    if (userExist) {
+      return res
+        .status(422)
+        .json({ success: false, error: "User already exists as non admin" });
     }
-    
-  if (!email || !password) {
-    return res
-      .status(400)
-      .json({ success: false, error: "email or password are missing" });
-  }
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, error: "email or password are missing" });
+    }
     const superUserExist = await SuperUser.findOne({ email: email });
     if (superUserExist) {
       res.status(422).json({
@@ -106,8 +103,7 @@ const RegisterSuperUser = async (req, res) => {
 
 //Adding login Authentication through here and creating the jwt tokens for auth
 const Login = async (req, res) => {
-
-let userId = "";
+  let userId = "";
   try {
     const { email, password } = req.body;
 
@@ -119,9 +115,8 @@ let userId = "";
     }
 
     let userLogin = await User.findOne({ email: email }).select("+password");
-    if(userLogin===null)
-    {
-    userLogin = await SuperUser.findOne({ email: email }).select("+password");
+    if (userLogin === null) {
+      userLogin = await SuperUser.findOne({ email: email }).select("+password");
     }
     userId = userLogin._id;
 
@@ -161,9 +156,74 @@ let userId = "";
   }
 };
 
+// get all normal users
+const GetAllusers = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  if (!token)
+    return res.send({
+      success: false,
+      error: "No token found",
+    });
+  try {
+    const decoded = jwt.verify(token, process.env.private_key);
+
+    superUser = await SuperUser.findById(decoded);
+    if (!superUser) {
+      return res.send({
+        success: false,
+        error: "Not authorized to get users",
+      });
+    }
+    const allUsers = await User.find();
+    res.send({
+      success: true,
+      data: allUsers,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({
+      success: false,
+      error: err,
+    });
+  }
+};
+
+// get Managers
+const GetManagers = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  if (!token)
+    return res.send({
+      success: false,
+      error: "No token found",
+    });
+  try {
+    const decoded = jwt.verify(token, process.env.private_key);
+
+    superUser = await SuperUser.findById(decoded);
+    if (!superUser) {
+      return res.send({
+        success: false,
+        error: "Not authorized to get users",
+      });
+    }
+
+    const Managers = await SuperUser.find({ role: { $eq: "Manager" } });
+
+    res.send({
+      success: true,
+      data: Managers,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({
+      success: false,
+      error: err,
+    });
+  }
+};
+
 // getting data from id
 const GetDataById = async (req, res) => {
-
   const token = req.headers.authorization.split(" ")[1];
   if (!token)
     return res.send({
@@ -174,10 +234,8 @@ const GetDataById = async (req, res) => {
     const decoded = jwt.verify(token, process.env.private_key);
 
     let user = await User.find({ _id: { $in: decoded._id } });
-    if(user.length==0)
-    {
-    user = await SuperUser.find({ _id: { $in: decoded._id } });
-
+    if (user.length == 0) {
+      user = await SuperUser.find({ _id: { $in: decoded._id } });
     }
     if (!user) {
       throw new Error("User not found");
@@ -192,17 +250,37 @@ const GetDataById = async (req, res) => {
 // updating data by Admin by using id
 const UpdateDataById = async (req, res) => {
   const updatedUser = req.body;
-  // const token=req.body.token
+  const userID = req.body.userID;
+
   const token = req.headers.authorization.split(" ")[1];
   if (!token)
     return res.send({
       success: false,
       error: "No token found",
     });
+
   const { _id } = jwt.verify(token, process.env.private_key);
+
+  superUser = await SuperUser.findById(_id);
+
+  if (!superUser) {
+    return res.send({
+      success: false,
+      error: "Not authorized to update user",
+    });
+  }
+
   try {
-    const user = await User.findByIdAndUpdate(_id, updatedUser, { new: true });
-    res.send(user);
+    const user = await User.findByIdAndUpdate(userID, updatedUser, {
+      new: true,
+    });
+    // trying to find user by emp id --doesnt work--
+    // const user=User.findOneAndUpdate({employeeID: userID}, updatedUser, { new: true });
+    res.send({
+      success: true,
+      message: "user updated",
+      updatedUser: user,
+    });
   } catch (err) {
     res.status(500).send(err);
   }
@@ -300,6 +378,8 @@ module.exports = {
   SendMail,
   ChangePass,
   HomePage,
+  GetAllusers,
+  GetManagers,
   GetDataById,
   UpdateDataById,
   Logout,

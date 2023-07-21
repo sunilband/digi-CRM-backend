@@ -64,7 +64,7 @@ const userSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    enum: ["intern", "manager", "jr.dev", "CEO"],
+    enum: ["Intern", "Junior Developer", "Senior Developer" , "Junior HR"],
     message: 'Role must be one of intern, manager, or jr.dev'
   },
   
