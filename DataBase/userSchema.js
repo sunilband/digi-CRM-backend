@@ -1,37 +1,11 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
-const shortid = require('shortid');
-shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
+const shortid = require("shortid");
+shortid.characters(
+  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@"
+);
 dotenv.config({ path: "../config.env" });
-
-// schema for tasks in user
-const taskSchema = new mongoose.Schema({
-  taskId: {
-      type: String,
-      required: true,
-    },
-  taskName: {
-      type: String,
-      required: true,
-    },
-  taskDescription: {
-      type: String,
-      required: true,
-    },
-  status: {
-      type: String,
-      required: true,
-    },
-  assignedBy: {
-      type: String,
-      required: true,
-    },
-  assignedTime:  {
-      type: Date,
-      default: Date.now
-    }
-});
 
 
 const userSchema = new mongoose.Schema({
@@ -56,33 +30,28 @@ const userSchema = new mongoose.Schema({
     minLength: [6, "Password too short"],
   },
 
-  // non required fields below
-  tasks: [{
-    type: [taskSchema],
-    default: []
-  }],
-
+  
   role: {
     type: String,
-    enum: ["Intern", "Junior Developer", "Senior Developer" , "Junior HR"],
-    message: 'Role must be one of intern, manager, or jr.dev'
+    enum: ["Intern", "Junior Developer", "Senior Developer", "Junior HR"],
+    message: "Role must be one of intern, manager, or jr.dev",
   },
-  
-  authLevel:{
-    type:Number,
-    default:0
+
+  authLevel: {
+    type: Number,
+    default: 0,
   },
 
   employeeID: {
     type: String,
     default: shortid.generate,
-    unique: true
+    unique: true,
   },
 
   department: {
     type: String,
     enum: ["sales", "frontend", "backend", "hr"],
-    message: 'Role must be one of sales, frontend,backend or hr'
+    message: "Role must be one of sales, frontend,backend or hr",
   },
 
   manager: {
@@ -97,7 +66,6 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: Number,
   },
-
 });
 
 userSchema.pre("save", async function (next) {

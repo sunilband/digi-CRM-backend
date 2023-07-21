@@ -6,33 +6,6 @@ shortid.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 dotenv.config({ path: "../config.env" });
 
 
-const taskSchema = new mongoose.Schema({
-    taskId: {
-        type: String,
-        required: true,
-      },
-    taskName: {
-        type: String,
-        required: true,
-      },
-    taskDescription: {
-        type: String,
-        required: true,
-      },
-    status: {
-        type: String,
-        required: true,
-      },
-    assignedBy: {
-        type: String,
-        required: true,
-      },
-    assignedTime:  {
-        type: Date,
-        default: Date.now
-      }
-});
-
 const superUserSchema = new mongoose.Schema({
 
   name: {
@@ -56,11 +29,6 @@ const superUserSchema = new mongoose.Schema({
     select: false,
     minLength: [6, "Password too short"],
   },
-
-  tasks: [{
-    type: [taskSchema],
-    default: []
-  }],
 
   admin:{
     type:Boolean,
