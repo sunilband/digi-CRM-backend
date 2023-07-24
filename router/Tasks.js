@@ -3,23 +3,27 @@ const router = express.Router()
 const Authenticate = require("../Middleware/Authentication")
 const {
    createTask,
-   getTasks
+   getTasks,
+   updateTask
 } = require("../controllers/Tasks")
 
 
 // GET
-router.get("/gettasks",getTasks)
 
 
 
 
 // POST
 router.post("/createtask",createTask)
+router.post("/gettasks",getTasks)
+
 
 
 
 // UPDATE
 // router.put('/users/updateuser',UpdateDataById );
+router.put('/updatetask',updateTask );
+
 
 // EXPORTS
 module.exports = router

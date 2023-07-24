@@ -9,6 +9,7 @@ const {
     ChangePass,
     HomePage,
     GetAllusers,
+    GetAdmins,
     GetManagers,
     GetDataById,
     UpdateDataById,
@@ -21,6 +22,7 @@ router.get("/home",Authenticate,HomePage)
 router.get("/logout",Logout)
 router.get("/users/",GetDataById)
 router.get("/users/getallusers",GetAllusers)
+router.get("/users/getalladmins",GetAdmins)
 router.get("/users/getmanagers",GetManagers)
 
 

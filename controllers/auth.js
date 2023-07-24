@@ -156,8 +156,72 @@ const Login = async (req, res) => {
   }
 };
 
-// get all normal users
+// get all users
 const GetAllusers = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  let admin = false;
+  if (!token)
+    return res.send({
+      success: false,
+      error: "No token found",
+    });
+  try {
+    const decoded = jwt.verify(token, process.env.private_key);
+    const user = await User.findById(decoded);
+    if (!user) {
+      const superUser = await SuperUser.findById(decoded);
+      if (!superUser) {
+        return res.send({
+          success: false,
+          error: "Not authorized to get users",
+        });
+      }
+
+      
+      const normalUsers = await User.find();
+      const superUsers = await SuperUser.find({
+        authLevel: { $lte: superUser.authLevel },
+      });
+      const totalUsers = [...superUsers, ...normalUsers];
+      res.send({
+        success: true,
+        data: totalUsers,
+      });
+    
+    }
+
+    if (user) {
+      const normalUsers = await User.find();
+      res.send({
+        success: true,
+        data: normalUsers,
+      });
+    }
+    
+    
+
+    // if(admin){
+    //   const superUsers = await SuperUser.find({
+    //     authLevel: { $lte: superUser.authLevel },
+    //   });
+    //   var totalUsers = [...superUsers, ...normalUsers];
+    // }
+    
+    // res.send({
+    //   success: true,
+    //   data: admin?totalUsers:normalUsers,
+    // });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({
+      success: false,
+      error: err,
+    });
+  }
+};
+
+// get admins with less prevliege
+const GetAdmins = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   if (!token)
     return res.send({
@@ -166,15 +230,18 @@ const GetAllusers = async (req, res) => {
     });
   try {
     const decoded = jwt.verify(token, process.env.private_key);
+    const user = await SuperUser.findById(decoded);
 
-    superUser = await SuperUser.findById(decoded);
-    if (!superUser) {
+    if (!user) {
       return res.send({
         success: false,
         error: "Not authorized to get users",
       });
     }
-    const allUsers = await User.find();
+
+    const allUsers = await SuperUser.find({
+      authLevel: { $lte: user.authLevel },
+    });
     res.send({
       success: true,
       data: allUsers,
@@ -379,6 +446,7 @@ module.exports = {
   ChangePass,
   HomePage,
   GetAllusers,
+  GetAdmins,
   GetManagers,
   GetDataById,
   UpdateDataById,
