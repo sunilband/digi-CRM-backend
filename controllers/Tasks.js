@@ -15,6 +15,7 @@ const createTask = async (req, res) => {
         success: false,
         error: "No token found",
       });
+      
     let admin=false
     const decoded = jwt.verify(token, process.env.private_key);
     let user = await User.findById(decoded);
@@ -97,7 +98,6 @@ const createTask = async (req, res) => {
 const getTasks = async (req, res) => {
   try {
     const { userID } = req.body;
-    
     const token = req.headers.authorization.split(" ")[1];
     if (!token)
       return res.send({
@@ -117,11 +117,16 @@ const getTasks = async (req, res) => {
         error: "Non users cant assign tasks",
       });
     }
+
     const tasks = await Task.find({ "assignedTo.id": userID?userID:decoded });
+    const assigned= await Task.find({ "assignedBy.id": userID?userID:decoded });
     return res.send({
-      success: false,
+      success: true,
       message: "Tasks fetched successfully",
-      data: tasks,
+      data: {
+        myTasks:tasks,
+        assignedTasks:assigned
+      },
     });
   } catch (error) {
     console.log(error);
@@ -166,12 +171,20 @@ try {
           }
           else{
               let task =await Task.findById(req.body._id)
+              let authorized=true
+
               if(task.assignedTo.id!==decoded._id){
-                  return res.send({
-                      success: false,
-                      error: "Cant edit other users task status",
-                    }); 
+                authorized=false  
               }
+              if(task.assignedBy.id===decoded._id){
+                authorized=true
+              } 
+
+              if(authorized===false)
+              return res.send({
+                success: false,
+                error: "Cant edit other users task status",
+              }); 
       
               let newTask = await Task.findByIdAndUpdate(req.body._id,updatedTask, {
                   new: true,
