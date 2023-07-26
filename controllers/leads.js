@@ -3,11 +3,12 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const User = require("../DataBase/userSchema");
 const Task = require("../DataBase/tasksSchema");
+const Lead = require("../DataBase/leadsSchema");
 const SuperUser = require("../DataBase/superUserSchema");
 const Otp = require("../DataBase/optSchema");
 const mongoose = require("mongoose");
 
-const createTask = async (req, res) => {
+const createLead = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
     if (!token)
@@ -31,16 +32,27 @@ const createTask = async (req, res) => {
     }
 
     const {
-      taskName,
-      taskDesc,
-      status,
-      assignedTo,
-      priority,
-      startDate,
+      name,
+      email,
+      company,
+      phone,
+      value,
       tags,
-      dueDate,
+      assignedBy,
+      assignedTo,
+      status,
+      source,
+      lastContacted,
     } = req.body;
-    if (!taskName || !taskDesc || !assignedTo || !priority || !dueDate) {
+    if (
+      !name ||
+      !email ||
+      !company ||
+      !phone ||
+      !value ||
+      !assignedTo ||
+      !lastContacted
+    ) {
       return res.send({
         success: false,
         error: "Incomplete data",
@@ -56,6 +68,13 @@ const createTask = async (req, res) => {
             taskUser = await SuperUser.findById(assignedTo);
           }
         }
+
+        if (!taskUser) {
+          return res.send({
+            success: false,
+            error: "The user to assign task doesnt exist",
+          });
+        }
       } catch (error) {
         return res.send({
           success: false,
@@ -63,10 +82,7 @@ const createTask = async (req, res) => {
         });
       }
 
-      const newTask = new Task({
-        taskName,
-        taskDescription: taskDesc,
-        status,
+      const newLead = new Lead({
         assignedBy: {
           name: user.name,
           id: user._id,
@@ -75,16 +91,21 @@ const createTask = async (req, res) => {
           name: taskUser.name,
           id: taskUser._id,
         },
-        startDate,
-        priority,
+        name,
+        email,
+        company,
+        phone,
+        value,
         tags,
-        dueDate,
+        status,
+        source,
+        lastContacted,
       });
-      await newTask.save();
+      await newLead.save();
       res.json({
         success: true,
-        message: "Task created successfully",
-        data: newTask,
+        message: "Lead created successfully",
+        data: newLead,
       });
     } catch (error) {
       console.log(error);
@@ -102,8 +123,8 @@ const createTask = async (req, res) => {
   }
 };
 
-//   if userID passed then it will search tasks for specific user else will use decoded token
-const getTasks = async (req, res) => {
+//   if userID passed then it will search leads for specific user else will use decoded token
+const getLeads = async (req, res) => {
   try {
     const { userID } = req.body;
     const token = req.headers.authorization.split(" ")[1];
@@ -126,18 +147,18 @@ const getTasks = async (req, res) => {
       });
     }
 
-    const tasks = await Task.find({
+    const leads = await Lead.find({
       "assignedTo.id": userID ? userID : decoded,
     });
-    const assigned = await Task.find({
+    const assigned = await Lead.find({
       "assignedBy.id": userID ? userID : decoded,
     });
     return res.send({
       success: true,
-      message: "Tasks fetched successfully",
+      message: "Leads fetched successfully",
       data: {
-        myTasks: tasks,
-        assignedTasks: assigned,
+        myLeads: leads,
+        assignedLeads: assigned,
       },
     });
   } catch (error) {
@@ -149,8 +170,8 @@ const getTasks = async (req, res) => {
   }
 };
 
-// update task info
-const updateTask = async (req, res) => {
+// update lead info
+const updateLead = async (req, res) => {
   try {
     let token = req.headers.authorization.split(" ")[1];
     if (!token)
@@ -172,20 +193,20 @@ const updateTask = async (req, res) => {
     }
 
     try {
-      const updatedTask = req.body;
+      const updatedLead = req.body;
       var authorized = true;
 
-      let task = await Task.findById(req.body._id);
+      let lead = await Lead.findById(req.body._id);
 
-      if (task.assignedTo.id !== decoded._id) {
+      if (lead.assignedTo.id !== decoded._id) {
         authorized = false;
       }
-      if (task.assignedBy.id === decoded._id) {
+      if (lead.assignedBy.id === decoded._id) {
         authorized = true;
       }
 
       if (user.admin) {
-        let task = await Task.findByIdAndUpdate(req.body._id, updatedTask, {
+        let lead = await Lead.findByIdAndUpdate(req.body._id, updatedLead, {
           new: true,
         });
         authorized = true;
@@ -197,21 +218,21 @@ const updateTask = async (req, res) => {
           error: "Cant edit other users task status",
         });
 
-      let newTask = await Task.findByIdAndUpdate(req.body._id, updatedTask, {
+      let newLead = await Lead.findByIdAndUpdate(req.body._id, updatedLead, {
         new: true,
       });
 
-      if (!newTask) {
+      if (!newLead) {
         return res.send({
           success: false,
-          error: "task update failed",
+          error: "lead update failed",
         });
       }
 
       res.send({
         success: true,
-        message: "Task updated",
-        updateTask: newTask,
+        message: "Lead updated",
+        updateLead: newLead,
       });
     } catch (err) {
       res.status(500).send(err);
@@ -225,7 +246,7 @@ const updateTask = async (req, res) => {
 };
 
 module.exports = {
-  createTask,
-  getTasks,
-  updateTask,
+  createLead,
+  getLeads,
+  updateLead,
 };

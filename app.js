@@ -15,6 +15,7 @@ app.use(BodyParser.urlencoded({extended:false}))
 // Route
 app.use(require("./router/auth"))
 app.use(require("./router/Tasks"))
+app.use(require("./router/Lead"))
 
 
 const port  = process.env.PORT || 5002
