@@ -18,6 +18,7 @@ app.use(require("./router/Tasks"))
 app.use(require("./router/Lead"))
 app.use(require("./router/Customer"))
 app.use(require("./router/Item"))
+app.use(require("./router/Proposal"))
 
 
 const port  = process.env.PORT || 5002
