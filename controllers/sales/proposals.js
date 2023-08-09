@@ -109,12 +109,12 @@ const createProposal = async (req, res) => {
     };
     let total = 0;
     for (let item of data.items) {
-      console.log(item);
       let itemTotal = item.rate * item.quantity;
       let taxAmount = itemTotal * (item.tax / 100);
       let ItemTotal = itemTotal + taxAmount;
-      if(item.data.rate.currency === "INR") {
+      // Convert from INR to USD if currency is INR
       // change conversion rate here
+      if(item.data.rate.currency === "INR") {
       const conversionRate = 0.013; // 1 INR = 0.013 USD
       ItemTotal *= conversionRate;
       }
@@ -127,7 +127,6 @@ const createProposal = async (req, res) => {
       total -= data.discount.value;
     }
 
-    // Convert from INR to USD if currency is INR
 
     total += data.discount.adjustment;
     // console.log(`The final amount is ${parseFloat(total).toFixed(2)} USD.`);
@@ -155,7 +154,6 @@ const createProposal = async (req, res) => {
         });
       }
 
-      console.log(leadID, customerID);
       if (leadID !== undefined) {
         try {
           var lead = await Lead.findById(leadID);
