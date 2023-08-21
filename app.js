@@ -19,6 +19,9 @@ app.use(require("./router/Lead"))
 app.use(require("./router/Customer"))
 app.use(require("./router/Item"))
 app.use(require("./router/Proposal"))
+app.use(require("./router/Estimate"))
+app.use(require("./router/Invoice"))
+app.use(require("./router/CreditNote"))
 
 
 const port  = process.env.PORT || 5002

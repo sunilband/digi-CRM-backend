@@ -1,14 +1,12 @@
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../../DataBase/userSchema");
-const Lead = require("../../DataBase/leadsSchema");
 const Customer = require("../../DataBase/customerSchema");
 const SuperUser = require("../../DataBase/superUserSchema");
-const Proposal = require("../../DataBase/SalesSchemas/proposalSchema");
+const CreditNote = require("../../DataBase/SalesSchemas/creditNoteSchema");
 const Item = require("../../DataBase/SalesSchemas/itemsSchema");
 const mongoose = require("mongoose");
 
-const createProposal = async (req, res) => {
+const createCreditNote = async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
     if (!token)
@@ -32,49 +30,34 @@ const createProposal = async (req, res) => {
     }
 
     const {
-      subject,
-      related,
-      leadID,
       customerID,
+      billingAddress,
+      shippingAddress,
+      creditNoteNumber,
       date,
-      openTill,
       currency,
       tags,
-      status,
       discountType,
-      to,
-      street,
-      city,
-      state,
-      zip,
-      country,
-      email,
-      phone,
-      assignedTo,
+      reference,
+      adminNote,
+      clientNote,
+      terms,
       items,
       totalDiscountType,
       value,
       adjustment,
-      subTotal,
     } = req.body;
     if (
-      !subject ||
-      !related ||
-      !(leadID || customerID) ||
+      !customerID ||
+      !billingAddress ||
+      !shippingAddress ||
+      !creditNoteNumber ||
       !date ||
-      !openTill ||
       !currency ||
-      !to ||
-      !street ||
-      !city ||
-      !state ||
-      !zip ||
-      !country ||
-      !email ||
-      !phone ||
-      !assignedTo ||
-      !items 
-    ) {
+      !adminNote ||
+      !items
+    ) 
+    {
       return res.send({
         success: false,
         error: "Incomplete data",
@@ -97,7 +80,6 @@ const createProposal = async (req, res) => {
       items[i].data = itemsArray[i];
     }
 
-
     // calculate subtotal
     const data = {
       items,
@@ -114,9 +96,9 @@ const createProposal = async (req, res) => {
       let ItemTotal = itemTotal + taxAmount;
       // Convert from INR to USD if currency is INR
       // change conversion rate here
-      if(item.data.rate.currency === "INR") {
-      const conversionRate = 0.013; // 1 INR = 0.013 USD
-      ItemTotal *= conversionRate;
+      if (item.data.rate.currency === "INR") {
+        const conversionRate = 0.013; // 1 INR = 0.013 USD
+        ItemTotal *= conversionRate;
       }
       total += ItemTotal;
     }
@@ -127,50 +109,10 @@ const createProposal = async (req, res) => {
       total -= data.discount.value;
     }
 
-
     total += data.discount.adjustment;
-    // console.log(`The final amount is ${parseFloat(total).toFixed(2)} USD.`);
-    //------------------------------------
 
     try {
-      try {
-        var assignedUser = await User.findById(assignedTo);
-        if (!assignedUser) {
-          if (admin) {
-            assignedUser = await SuperUser.findById(assignedTo);
-          }
-        }
-
-        if (!assignedUser) {
-          return res.send({
-            success: false,
-            error: "The user to assign proposal doesnt exist",
-          });
-        }
-      } catch (error) {
-        return res.send({
-          success: false,
-          error: "The user to assign proposal doesnt exist",
-        });
-      }
-
-      if (leadID !== undefined) {
-        try {
-          var lead = await Lead.findById(leadID);
-          if (!lead) {
-            return res.send({
-              success: false,
-              error: "The lead doesnt exist",
-            });
-          }
-        } catch (error) {
-          return res.send({
-            success: false,
-            error: error.toString(),
-          });
-        }
-      }
-
+    
       if (customerID !== undefined) {
         try {
           var customer = await Customer.findById(customerID);
@@ -188,89 +130,40 @@ const createProposal = async (req, res) => {
         }
       }
 
-      if (leadID !== undefined) {
-        var newProposal = new Proposal({
-          assignedBy: {
-            name: user.name,
-            id: user._id,
-          },
-          assignedTo: {
-            name: assignedUser.name,
-            id: assignedUser._id,
-          },
-          lead: {
-            name: lead.name,
-            id: lead._id,
-          },
-          subject,
-          related,
-          date,
-          openTill,
-          currency,
-          tags,
-          status,
-          discountType,
-          to,
-          street,
-          city,
-          state,
-          zip,
-          country,
-          email,
-          phone,
-          items,
-          discount: {
-            totalDiscountType,
-            value,
-            adjustment,
-          },
-          subTotal: total
-        });
-      } else {
-        var newProposal = new Proposal({
-          assignedBy: {
-            name: user.name,
-            id: user._id,
-          },
-          assignedTo: {
-            name: assignedUser.name,
-            id: assignedUser._id,
-          },
-          customer: {
-            name: customer.company,
-            id: customer._id,
-          },
-          subject,
-          related,
-          date,
-          openTill,
-          currency,
-          tags,
-          status,
-          discountType,
-          to,
-          street,
-          city,
-          state,
-          zip,
-          country,
-          email,
-          phone,
-          items,
-          discount: {
-            totalDiscountType,
-            value,
-            adjustment,
-          },
-          subTotal: total
-        });
-      }
+      var newCreditNote = new CreditNote({
+        customer: {
+          name: customer.company,
+          id: customer._id,
+        },
+        billingAddress,
+        shippingAddress,
+        creditNoteNumber,
+        date,
+        currency,
+        tags,
+        discountType,
+        assignedBy: {
+          name: user.name,
+          id: user._id,
+        },
+        reference,
+        adminNote,
+        clientNote,
+        terms,
+        items,
+        discount: {
+          totalDiscountType,
+          value,
+          adjustment,
+        },
+        subTotal: total,
+      });
 
-      await newProposal.save();
+      await newCreditNote.save();
       res.json({
         success: true,
-        message: "Proposal created successfully",
-        data: newProposal,
+        message: "CreditNote created successfully",
+        data: newCreditNote,
       });
     } catch (error) {
       console.log(error);
@@ -289,7 +182,7 @@ const createProposal = async (req, res) => {
 };
 
 //   if userID passed then it will search leads for specific user else will use decoded token
-const getProposals = async (req, res) => {
+const getCreditNotes = async (req, res) => {
   try {
     const { userID } = req.body;
     const token = req.headers.authorization.split(" ")[1];
@@ -308,20 +201,22 @@ const getProposals = async (req, res) => {
     if (!user) {
       return res.send({
         success: false,
-        error: "Non users fetch proposals",
+        error: "Non users fetch creditNotes",
       });
     }
 
-    const proposals = await Proposal.find({});
-    const assignedProposals = await Proposal.find({
+    const creditNotes = await CreditNote.find({});
+
+    const assignedCreditNotes = await CreditNote.find({
       "assignedBy.id": userID ? userID : decoded,
     });
+
     return res.send({
       success: true,
-      message: "Proposals fetched successfully",
+      message: "CreditNotes fetched successfully",
       data: {
-        Proposals: proposals,
-        assignedProposals: assignedProposals,
+        CreditNotes: creditNotes,
+        assignedCreditNotes: assignedCreditNotes,
       },
     });
   } catch (error) {
@@ -334,7 +229,7 @@ const getProposals = async (req, res) => {
 };
 
 // update lead info
-const updateProposal = async (req, res) => {
+const updateCreditNote = async (req, res) => {
   try {
     let token = req.headers.authorization.split(" ")[1];
     if (!token)
@@ -356,27 +251,27 @@ const updateProposal = async (req, res) => {
     }
 
     try {
-      const updatedProposal = req.body;
+      const updatedCreditNote = req.body;
 
-      let newProposal = await Proposal.findByIdAndUpdate(
+      let newCreditNote = await CreditNote.findByIdAndUpdate(
         req.body._id,
-        updatedProposal,
+        updatedCreditNote,
         {
           new: true,
         }
       );
 
-      if (!newProposal) {
+      if (!newCreditNote) {
         return res.send({
           success: false,
-          error: "lead update failed",
+          error: "CreditNote update failed",
         });
       }
 
       res.send({
         success: true,
-        message: "Proposal updated",
-        updatedProposal: newProposal,
+        message: "CreditNote updated",
+        updatedCreditNote: newCreditNote,
       });
     } catch (err) {
       res.status(500).send(err);
@@ -390,7 +285,7 @@ const updateProposal = async (req, res) => {
 };
 
 module.exports = {
-  createProposal,
-  getProposals,
-  updateProposal,
+  createCreditNote,
+  getCreditNotes,
+  updateCreditNote,
 };
