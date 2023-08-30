@@ -41,3 +41,5 @@ mongoose.connect(path)
 app.listen(port,async ()=>{
   console.log(`Your port is ${port}`)
 });
+
+export default app;
