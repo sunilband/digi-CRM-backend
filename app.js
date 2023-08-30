@@ -28,6 +28,10 @@ app.use(require("./router/Payment"))
 const port  = process.env.PORT || 5002
 const path = process.env.DB_PATH
 
+app.get("/",(req,res)=>{
+  res.send("Hello from the server")
+})
+
 // connecting to the Database
 mongoose.connect(path)
   .then(() => console.log("Database connected!"))
